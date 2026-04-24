@@ -15,18 +15,24 @@ This is the master workflow prompt to automate software development using Claude
    - Search Confluence for relevant technical details to enhance the story.
    - Output a concrete implementation plan.
 
-2. **Implementation (Developer Agent):**
+2. **Context Generation (Context Generator Agent):**
+   - Read the instructions in `.ai/agents/context_generator.md`.
+   - Check if `.ai/references/generated/project_context.md` exists and is up to date.
+   - If missing or outdated, run shell commands to analyze the repository structure and create it.
+
+3. **Implementation (Developer Agent):**
    - Read the instructions in `.ai/agents/developer.md`.
+   - Review `.ai/references/generated/project_context.md` to understand the architecture.
    - Review `.ai/references/java_conventions.md` and `.ai/references/repo_rules.md`.
    - Write the Java code and unit tests to fulfill the implementation plan.
 
-3. **Review (Reviewer Agent):**
+4. **Review (Reviewer Agent):**
    - Read the instructions in `.ai/agents/reviewer.md`.
    - Analyze the changes made by the Developer agent.
    - If issues are found, iteratively fix them with the Developer agent.
    - Proceed only when the code passes all standards and tests.
 
-4. **Submission (PR Manager Agent):**
+5. **Submission (PR Manager Agent):**
    - Read the instructions in `.ai/agents/pr_manager.md`.
    - Commit the approved changes to a new branch.
    - Push the branch and raise a Pull Request in GitHub with a link to the Jira ticket.
