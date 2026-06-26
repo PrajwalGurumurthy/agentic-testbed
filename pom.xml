@@ -13,6 +13,7 @@
     <modules>
         <module>chaos-bdd-lib</module>
         <module>sample-app</module>
+        <module>virtual-reactor-bridge</module>
     </modules>
 
     <properties>
