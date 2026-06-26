@@ -6,20 +6,22 @@ Feature: Chaos Testing the Sample Application
   Scenario: Application works normally without chaos
     Given chaos monkey is disabled
     When I request the message
-    Then the response should be "Hello from DemoService!"
+    Then the response should be "Aggregated: ServiceA_OK & ServiceB_OK"
 
-  Scenario: Application throws exception when exception assault is configured
+  Scenario: External API latency triggers fallback resilience pattern
     Given chaos monkey is enabled
-    When exception assault of type "java.lang.RuntimeException" is configured
-    And I request the message expecting an error
-    Then the application should return an error status
+    When chaos watcher for "restController" is disabled and "restTemplate" is enabled
+    And latency assault of 2000 ms is configured
+    And I request the message
+    Then the response should be "Aggregated: Fallback data & Fallback data"
     And all assaults are reset
     And chaos monkey is disabled
 
-  Scenario: Application is slow when latency assault is configured
+  Scenario: External API exception triggers fallback resilience pattern
     Given chaos monkey is enabled
-    When latency assault of 500 ms to 1000 ms is configured
+    When chaos watcher for "restController" is disabled and "restTemplate" is enabled
+    And exception assault of type "java.lang.RuntimeException" is configured
     And I request the message
-    Then the response time should be at least 500 ms
+    Then the response should be "Aggregated: Fallback data & Fallback data"
     And all assaults are reset
     And chaos monkey is disabled
