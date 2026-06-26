@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.Duration;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.stockservices.sample", "com.stockservices.common.chaos.lib"})
+
 public class SampleApplication {
     public static void main(String[] args) {
         SpringApplication.run(SampleApplication.class, args);

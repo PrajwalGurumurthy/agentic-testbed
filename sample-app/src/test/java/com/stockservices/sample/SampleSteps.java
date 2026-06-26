@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "spring.profiles.active=chaos-monkey"
 })
-@ComponentScan(basePackages = {"com.stockservices.common.chaos.lib", "com.stockservices.sample"})
+@org.springframework.context.annotation.Import(com.stockservices.common.chaos.lib.ChaosMonkeyFacade.class)
 public class SampleSteps {
 
     @LocalServerPort
@@ -75,13 +75,13 @@ public class SampleSteps {
 
     @Then("the response should be {string}")
     public void theResponseShouldBe(String expectedMessage) {
-        assertEquals(200, lastResponse.getStatusCodeValue());
+        assertEquals(200, lastResponse.getStatusCode().value());
         assertEquals(expectedMessage, lastResponse.getBody());
     }
 
     @Then("the application should return an error status")
     public void theApplicationShouldReturnAnErrorStatus() {
-        assertTrue(lastResponse.getStatusCodeValue() >= 500, "Status code should be 5xx, but was " + lastResponse.getStatusCodeValue());
+        assertTrue(lastResponse.getStatusCode().value() >= 500, "Status code should be 5xx, but was " + lastResponse.getStatusCode().value());
     }
 
     @Then("the response time should be at least {int} ms")
