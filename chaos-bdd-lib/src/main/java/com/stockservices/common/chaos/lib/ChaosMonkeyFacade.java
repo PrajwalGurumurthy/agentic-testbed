@@ -1,7 +1,7 @@
 package com.stockservices.common.chaos.lib;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,7 +16,7 @@ import java.util.Map;
 public class ChaosMonkeyFacade {
 
     @Autowired
-    private TestRestTemplate testRestTemplate;
+    private Environment environment;
 
     // A private unmanaged RestTemplate that ChaosMonkey won't intercept!
     private final RestTemplate unmanagedRestTemplate = new RestTemplate();
@@ -27,8 +27,8 @@ public class ChaosMonkeyFacade {
     private static final String CHAOS_MONKEY_WATCHERS_URL = "/actuator/chaosmonkey/watchers";
 
     private String getBaseUrl() {
-        // We use the TestRestTemplate just to get the correct absolute URL, as it knows the random port
-        return testRestTemplate.getRootUri();
+        String port = environment.getProperty("local.server.port", "8080");
+        return "http://localhost:" + port;
     }
 
     public void enableChaos() {
