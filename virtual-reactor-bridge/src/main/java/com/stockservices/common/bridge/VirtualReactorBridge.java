@@ -1,9 +1,11 @@
 package com.stockservices.common.bridge;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -35,6 +37,19 @@ public class VirtualReactorBridge {
     }
 
     /**
+     * Offloads a blocking task returning an Iterable to a Virtual Thread and returns a Reactive Flux.
+     *
+     * @param blockingTask The blocking task to execute.
+     * @param <T>          The type of the elements in the Iterable.
+     * @return A Flux that emits the elements of the Iterable.
+     */
+    public static <T> Flux<T> offloadIterableToVirtual(Callable<Iterable<T>> blockingTask) {
+        return Mono.fromCallable(blockingTask)
+                   .subscribeOn(VIRTUAL_THREAD_SCHEDULER)
+                   .flatMapMany(Flux::fromIterable);
+    }
+
+    /**
      * Executes a Reactive Mono and returns a CompletableFuture.
      * If called from a platform thread, the reactive pipeline subscription and execution
      * are offloaded to a virtual thread. The caller can decide whether to block (join)
@@ -54,6 +69,22 @@ public class VirtualReactorBridge {
     }
 
     /**
+     * Executes a Reactive Flux and returns a CompletableFuture containing a List of all emitted items.
+     * If called from a platform thread, the reactive pipeline subscription and execution
+     * are offloaded to a virtual thread.
+     *
+     * @param reactivePublisher The Flux to execute.
+     * @param <T>               The type of the result elements.
+     * @return A CompletableFuture containing the collected List of results.
+     */
+    public static <T> CompletableFuture<List<T>> offloadToReactive(Flux<T> reactivePublisher) {
+        return reactivePublisher
+                .collectList()
+                .subscribeOn(VIRTUAL_THREAD_SCHEDULER)
+                .toFuture();
+    }
+
+    /**
      * Executes a Reactive Mono, blocking the current thread until the result is available.
      * This will block efficiently if the current thread is a Virtual Thread.
      *
@@ -62,6 +93,18 @@ public class VirtualReactorBridge {
      * @return The result of the Mono.
      */
     public static <T> T blockReactive(Mono<T> reactivePublisher) {
+        return offloadToReactive(reactivePublisher).join();
+    }
+
+    /**
+     * Executes a Reactive Flux, blocking the current thread until the result is available
+     * as a collected List. This will block efficiently if the current thread is a Virtual Thread.
+     *
+     * @param reactivePublisher The Flux to execute.
+     * @param <T>               The type of the result elements.
+     * @return A List of all emitted items.
+     */
+    public static <T> List<T> blockReactive(Flux<T> reactivePublisher) {
         return offloadToReactive(reactivePublisher).join();
     }
 
@@ -77,6 +120,33 @@ public class VirtualReactorBridge {
     public static <T> void offloadToReactive(
             Mono<T> reactivePublisher,
             Consumer<T> successCallback,
+            Consumer<Throwable> errorCallback) {
+
+        offloadToReactive(reactivePublisher).whenCompleteAsync((result, throwable) -> {
+            if (throwable != null) {
+                if (errorCallback != null) {
+                    errorCallback.accept(throwable);
+                }
+            } else {
+                if (successCallback != null) {
+                    successCallback.accept(result);
+                }
+            }
+        }, VIRTUAL_THREAD_EXECUTOR);
+    }
+
+    /**
+     * Executes a Reactive Flux asynchronously on a virtual thread, collects the items into a List,
+     * and invokes the appropriate callback upon completion or error.
+     *
+     * @param reactivePublisher The Flux to execute.
+     * @param successCallback   Callback invoked with the collected List on success.
+     * @param errorCallback     Callback invoked with the exception on error.
+     * @param <T>               The type of the result elements.
+     */
+    public static <T> void offloadToReactive(
+            Flux<T> reactivePublisher,
+            Consumer<List<T>> successCallback,
             Consumer<Throwable> errorCallback) {
 
         offloadToReactive(reactivePublisher).whenCompleteAsync((result, throwable) -> {
