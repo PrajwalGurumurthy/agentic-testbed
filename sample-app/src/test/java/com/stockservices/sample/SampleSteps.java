@@ -2,6 +2,7 @@ package com.stockservices.sample;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +31,9 @@ public class SampleSteps {
     @LocalServerPort
     private int port;
 
+    @Autowired
+    private ExternalApiClient externalApiClient;
+
     // We create our own RestTemplate for tests to avoid ChaosMonkey intercepting TestRestTemplate.
     // If we create it directly with new RestTemplate(), it won't be a bean and won't be proxied.
     private RestTemplate testClient = new RestTemplate();
@@ -39,9 +44,13 @@ public class SampleSteps {
 
     @Before
     public void setup() {
-        wireMockServer = new WireMockServer(8081);
+        // Use a dynamic port for wiremock to prevent port collisions
+        wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort());
         wireMockServer.start();
-        WireMock.configureFor("localhost", 8081);
+        WireMock.configureFor("localhost", wireMockServer.port());
+
+        // Overwrite the baseUrl in ExternalApiClient to point to the dynamic wiremock port
+        ReflectionTestUtils.setField(externalApiClient, "baseUrl", "http://localhost:" + wireMockServer.port());
 
         stubFor(get(urlEqualTo("/service-a"))
                 .willReturn(aResponse()

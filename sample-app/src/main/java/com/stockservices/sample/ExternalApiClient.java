@@ -16,7 +16,7 @@ public class ExternalApiClient {
 
     private static final Logger logger = LoggerFactory.getLogger(ExternalApiClient.class);
     private final RestTemplate restTemplate;
-    private final String baseUrl;
+    private String baseUrl;
 
     public ExternalApiClient(RestTemplate restTemplate, @Value("${external.api.base-url}") String baseUrl) {
         this.restTemplate = restTemplate;
