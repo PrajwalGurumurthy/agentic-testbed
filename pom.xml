@@ -13,6 +13,8 @@
     <modules>
         <module>chaos-bdd-lib</module>
         <module>sample-app</module>
+        <module>virtual-reactor-bridge</module>
+        <module>couchbase-sample-app</module>
     </modules>
 
     <properties>

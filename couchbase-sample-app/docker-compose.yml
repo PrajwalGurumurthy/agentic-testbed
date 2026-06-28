@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  couchbase:
+    image: couchbase:enterprise-7.2.2
+    ports:
+      - "8091-8096:8091-8096"
+      - "11210-11211:11210-11211"
+    environment:
+      - COUCHBASE_ADMINISTRATOR_USERNAME=Administrator
+      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+      - COUCHBASE_BUCKET=sample_bucket
+      - COUCHBASE_BUCKET_RAMSIZE=256
+      - COUCHBASE_SERVICES=kv,n1ql,index
